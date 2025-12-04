@@ -220,6 +220,7 @@ const PopupWidget = publicWidget.Widget.extend(ObservingCookieWidgetMixin, {
         const previouslyFocusedEl = document.activeElement || document.body;
         if (tabableEls.length) {
             tabableEls[0].focus();
+            this.el.querySelector(".modal").scrollTop = 0;
         } else {
             this.el.focus();
         }
@@ -503,7 +504,7 @@ publicWidget.registry.cookies_bar = PopupWidget.extend({
      * @param ev
      */
     _onAcceptClick(ev) {
-        const isFullConsent = ev.target.id === "cookies-consent-all";
+        const isFullConsent = ev.currentTarget.id === "cookies-consent-all";
         this.cookieValue = `{"required": true, "optional": ${isFullConsent}, "ts": ${Date.now()}}`;
         if (isFullConsent) {
             document.dispatchEvent(new Event("optionalCookiesAccepted"));
