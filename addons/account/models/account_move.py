@@ -2,7 +2,7 @@
 
 import calendar
 from collections import defaultdict
-from contextlib import ExitStack, contextmanager
+from contextlib import ExitStack, contextmanager, nullcontext
 from datetime import date, timedelta
 from dateutil.relativedelta import relativedelta
 from hashlib import sha256
@@ -1078,16 +1078,20 @@ class AccountMove(models.Model):
         self.ensure_one()
         return self.invoice_date or fields.Date.context_today(self)
 
+    def _get_expected_currency_rate_at(self, date):
+        self.ensure_one()
+        return self.env['res.currency']._get_conversion_rate(
+            from_currency=self.company_currency_id,
+            to_currency=self.currency_id,
+            company=self.company_id,
+            date=date,
+        )
+
     @api.depends('currency_id', 'company_currency_id', 'company_id', 'invoice_date')
     def _compute_expected_currency_rate(self):
         for move in self:
             if move.currency_id:
-                move.expected_currency_rate = move.env['res.currency']._get_conversion_rate(
-                    from_currency=move.company_currency_id,
-                    to_currency=move.currency_id,
-                    company=move.company_id,
-                    date=move._get_invoice_currency_rate_date(),
-                )
+                move.expected_currency_rate = move._get_expected_currency_rate_at(move._get_invoice_currency_rate_date())
             else:
                 move.expected_currency_rate = 1
 
@@ -1499,6 +1503,7 @@ class AccountMove(models.Model):
             rate=rate,
             sign=sign,
             special_mode=False if is_invoice else 'total_excluded',
+            name=product_line.name,
         )
 
     def _prepare_epd_base_line_for_taxes_computation(self, epd_line):
@@ -3532,6 +3537,18 @@ class AccountMove(models.Model):
         elif 'invoice_line_ids' in field_names:
             values = {key: val for key, val in values.items() if key != 'line_ids'}
             fields_spec = {key: val for key, val in fields_spec.items() if key != 'line_ids'}
+            # When product_id and price_unit are in values, values is reordered to make sure
+            # that product_id is before price_unit because product_id is triggering an onchange
+            # of price_unit that could override the one defined here if the product_id is set
+            # after price_unit
+            invoice_line_ids = values.get('invoice_line_ids')
+            for invoice_line_idx, invoice_line in enumerate(invoice_line_ids):
+                if (len(invoice_line) == 3 and invoice_line[0] == 1 and isinstance(invoice_line[2], dict) and
+                    'product_id' in invoice_line[2] and 'price_unit' in invoice_line[2]
+                ):
+                    if isinstance(invoice_line, tuple):
+                        invoice_line_ids[invoice_line_idx] = invoice_line = list(invoice_line)
+                    invoice_line[2] = dict(sorted(invoice_line[2].items(), key=lambda item: item[0] != 'product_id'))
         return super().onchange(values, field_names, fields_spec)
 
     @api.model
@@ -5073,11 +5090,14 @@ class AccountMove(models.Model):
             # lines are recomputed accordingly.
             if not invoice.invoice_date:
                 if invoice.is_sale_document(include_receipts=True):
-                    invoice.invoice_date = fields.Date.context_today(self)
+                    is_manual_rate = invoice.invoice_currency_rate != invoice._get_expected_currency_rate_at(invoice.create_date.date())
+                    with self.env.protecting([self._fields['invoice_currency_rate']], invoice) if is_manual_rate else nullcontext():
+                        invoice.invoice_date = fields.Date.context_today(self)
                 elif invoice.is_purchase_document(include_receipts=True):
                     validation_msgs.add(_("The Bill/Refund date is required to validate this document."))
 
         for move in self:
+            move.line_ids._check_constrains_account_id_journal_id()
             if move.state in ['posted', 'cancel']:
                 validation_msgs.add(_('The entry %(name)s (id %(id)s) must be in draft.', name=move.name, id=move.id))
             if not move.line_ids.filtered(lambda line: line.display_type not in ('line_section', 'line_note')):
@@ -5106,6 +5126,12 @@ class AccountMove(models.Model):
         if validation_msgs:
             msg = "\n".join([line for line in validation_msgs])
             raise UserError(msg)
+
+        if inactive_analytic_ids := self.line_ids.with_context(active_test=False).distribution_analytic_account_ids.filtered(lambda a: not a.active):
+            raise UserError(_(
+                "You cannot post an entry with an archived analytic account: %s",
+                ', '.join(inactive_analytic_ids.mapped('name')),
+            ))
 
         if soft:
             future_moves = self.filtered(lambda move: move.date > fields.Date.context_today(self))
@@ -5301,7 +5327,22 @@ class AccountMove(models.Model):
         }
 
     def action_update_fpos_values(self):
-        self.invoice_line_ids._compute_price_unit()
+        lines_to_recompute = self.env['account.move.line']
+        for line in self.invoice_line_ids:
+            if line.display_type in ('line_section', 'line_note'):
+                continue
+            if not line.price_unit:
+                lines_to_recompute |= line
+                continue
+            new_taxes = line._get_computed_taxes()
+            if line.tax_ids.filtered('price_include') != new_taxes.filtered('price_include'):
+                line.price_unit = line.product_id._get_tax_included_unit_price_from_price(
+                    line.price_unit,
+                    line.tax_ids,
+                    fiscal_position=line.move_id.fiscal_position_id,
+                    product_taxes_after_fp=new_taxes,
+                )
+        lines_to_recompute._compute_price_unit()
         self.invoice_line_ids._compute_tax_ids()
         self.line_ids._compute_account_id()
 

@@ -13,13 +13,14 @@
 # "Manon Rondou (ronm)" <ronm@odoo.com>, 2025.
 # Camille Dantinne <cmd@odoo.com>, 2025.
 # Weblate <noreply-mt-weblate@weblate.org>, 2025.
+# Bren Driesen <brdri@odoo.com>, 2026.
 msgid ""
 msgstr ""
 "Project-Id-Version: Odoo Server 18.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-11-28 18:36+0000\n"
-"PO-Revision-Date: 2025-11-21 06:39+0000\n"
-"Last-Translator: Weblate <noreply-mt-weblate@weblate.org>\n"
+"POT-Creation-Date: 2026-01-08 18:36+0000\n"
+"PO-Revision-Date: 2026-01-10 09:14+0000\n"
+"Last-Translator: Bren Driesen <brdri@odoo.com>\n"
 "Language-Team: Dutch <https://translate.odoo.com/projects/odoo-18/account/nl/"
 ">\n"
 "Language: nl\n"
@@ -27,7 +28,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: \n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Weblate 5.12.2\n"
+"X-Generator: Weblate 5.14.3\n"
 
 #. module: account
 #: model:ir.model.fields,help:account.field_account_journal__type
@@ -1930,6 +1931,14 @@ msgid "Account Chart Template"
 msgstr "Sjabloon grootboekschema"
 
 #. module: account
+#. odoo-python
+#: code:addons/account/models/account_code_mapping.py:0
+msgid ""
+"Account Code Mapping cannot be accessed directly. It is designed to be used "
+"only through the Chart of Accounts."
+msgstr ""
+
+#. module: account
 #: model:ir.model.fields,field_description:account.field_account_report_line__account_codes_formula
 msgid "Account Codes Formula Shortcut"
 msgstr "Sneltoets formules voor rekeningen"
@@ -2020,7 +2029,7 @@ msgstr "Vervangingstabel grootboekrekeningen"
 #. module: account
 #: model:ir.model,name:account.model_account_move_reversal
 msgid "Account Move Reversal"
-msgstr "Tegenboeking rekening"
+msgstr "Tegenboeking"
 
 #. module: account
 #: model:ir.model,name:account.model_account_move_send
@@ -2030,12 +2039,12 @@ msgstr "Boeking verzenden"
 #. module: account
 #: model:ir.model,name:account.model_account_move_send_batch_wizard
 msgid "Account Move Send Batch Wizard"
-msgstr "Rekening verplaatsen verzend wizard"
+msgstr "Wizard voor Boeking in batch verzenden"
 
 #. module: account
 #: model:ir.model,name:account.model_account_move_send_wizard
 msgid "Account Move Send Wizard"
-msgstr "Wizard rekening verplaatsen verzenden"
+msgstr "Wizard voor Boeking verzenden"
 
 #. module: account
 #: model:ir.model.fields,field_description:account.field_account_account__name
@@ -3375,6 +3384,11 @@ msgstr "Aantal bijlagen"
 #: model:ir.model.fields,field_description:account.field_account_payment__attachment_ids
 msgid "Attachments"
 msgstr "Bijlagen"
+
+#. module: account
+#: model:ir.model.fields,field_description:account.field_account_move_send_wizard__attachments_not_supported
+msgid "Attachments Not Supported"
+msgstr ""
 
 #. module: account
 #: model:ir.model.fields,field_description:account.field_mail_mail__account_audit_log_activated
@@ -6558,6 +6572,11 @@ msgid "Display Amount"
 msgstr "Bedrag weergeven"
 
 #. module: account
+#: model:ir.model.fields,field_description:account.field_account_move_send_wizard__display_attachments_widget
+msgid "Display Attachments Widget"
+msgstr ""
+
+#. module: account
 #: model:ir.model.fields,field_description:account.field_account_payment_term_line__display_days_next_month
 msgid "Display Days Next Month"
 msgstr "Toon dagen volgende maand"
@@ -8080,7 +8099,7 @@ msgstr "Goede betaler"
 #: model:ir.model.fields.selection,name:account.selection__account_tax__tax_scope__consu
 #: model_terms:ir.ui.view,arch_db:account.view_account_tax_search
 msgid "Goods"
-msgstr "Diverse goederen"
+msgstr "Goederen"
 
 #. module: account
 #: model:ir.model.fields,field_description:account.field_account_account__group_id
@@ -8309,6 +8328,11 @@ msgstr "Horizontale splitsing"
 #: model_terms:ir.ui.view,arch_db:account.res_config_settings_view_form
 msgid "How total tax amount is computed in orders and invoices"
 msgstr "Hoe het btw-totaal berekend is in orders en facturen"
+
+#. module: account
+#: model_terms:ir.ui.view,arch_db:account.report_invoice_document
+msgid "ICE:"
+msgstr "ICE:"
 
 #. module: account
 #: model:ir.model.fields,field_description:account.field_account_account__id
@@ -14625,8 +14649,9 @@ msgid ""
 "Specify an arbitrary value that will be accrued on a         default account "
 "for the entire order, regardless of the products on the different lines."
 msgstr ""
-"Geef een willekeurige waarde op die wordt opgebouwd op een standaardrekening "
-"voor de hele order, ongeacht de producten op de verschillende regels."
+"Geef een willekeurige waarde op die als overlopende boeking wordt geboekt op "
+"een          standaardrekening voor de hele order, ongeacht welke producten "
+"er op de verschillende regels staan."
 
 #. module: account
 #: model:ir.model.fields,help:account.field_account_bank_statement_line__auto_post
@@ -15859,6 +15884,14 @@ msgstr "De documenten die het factuur gegenereerd hebben."
 #: code:addons/account/models/account_move.py:0
 msgid "The entry %(name)s (id %(id)s) must be in draft."
 msgstr "De boeking %(name)s (id %(id)s) moet in concept zijn."
+
+#. module: account
+#. odoo-python
+#: code:addons/account/models/account_move.py:0
+msgid ""
+"The entry '%(move_name)s (id %(move_id)s) is using accounts from a different "
+"company."
+msgstr ""
 
 #. module: account
 #: model:ir.model.fields,help:account.field_account_bank_statement_line__secured
@@ -17532,7 +17565,7 @@ msgstr "Nog niet gedefinieerd"
 #: code:addons/account/models/company.py:0
 #: model:account.account,name:account.1_unaffected_earnings_account
 msgid "Undistributed Profits/Losses"
-msgstr "Uitgekeerde winsten/verliezen"
+msgstr "Niet-uitgekeerde winsten/verliezen"
 
 #. module: account
 #: model:ir.model.fields,field_description:account.field_account_report__filter_unfold_all

@@ -591,7 +591,9 @@ class MrpProduction(models.Model):
             if not production.bom_id and not production._origin.product_id:
                 production.workorder_ids = workorders_list
             # if the product has changed or if in a second onchange with bom resets the relations
-            if production.product_id != production._origin.product_id or (production._origin.bom_id != production.bom_id and production._origin.bom_id.operation_ids and not production.workorder_ids.filtered(lambda wo: wo.ids and wo.operation_id)):
+            if production.product_id != production._origin.product_id \
+                or (not production._origin.bom_id and production.bom_id) \
+                or (production._origin.bom_id != production.bom_id and production._origin.bom_id.operation_ids and not production.workorder_ids.filtered(lambda wo: wo.ids and wo.operation_id)):
                 production.workorder_ids = [Command.clear()]
             if production.bom_id and production.product_id and production.product_qty > 0:
                 # keep manual entries
@@ -919,7 +921,7 @@ class MrpProduction(models.Model):
         if 'workorder_ids' in self:
             production_to_replan = self.filtered(lambda p: p.is_planned)
         for move_str in ('move_raw_ids', 'move_finished_ids'):
-            if move_str not in vals or self.state in ['draft', 'cancel', 'done']:
+            if move_str not in vals or self.state in ['cancel', 'done']:
                 continue
             # When adding a move raw/finished, it should have the source location's `warehouse_id`.
             # Before, it was handle by an onchange, now it's forced if not already in vals.
@@ -1739,8 +1741,8 @@ class MrpProduction(models.Model):
         self.workorder_ids.filtered(lambda x: x.state not in ['done', 'cancel']).action_cancel()
         finish_moves = self.move_finished_ids.filtered(lambda x: x.state not in ('done', 'cancel'))
         raw_moves = self.move_raw_ids.filtered(lambda x: x.state not in ('done', 'cancel'))
-        (finish_moves | raw_moves)._action_cancel()
-        picking_ids = self.picking_ids.filtered(lambda x: x.state not in ('done', 'cancel'))
+        (finish_moves | raw_moves).with_context(skip_mo_check=True)._action_cancel()
+        picking_ids = self.picking_ids.filtered(lambda x: x.state not in ('done', 'cancel') and not any(mo.state == 'done' for mo in x.production_ids))
         picking_ids.action_cancel()
 
         for production, documents in documents_by_production.items():
@@ -2417,6 +2419,7 @@ class MrpProduction(models.Model):
             'picking_type_id': self.picking_type_id.id,
             'product_qty': sum(production.product_uom_qty for production in self),
             'product_uom_id': product_id.uom_id.id,
+            'location_final_id': all(mo.location_final_id for mo in self) and len(self.location_final_id) == 1 and self.location_final_id.id,
             'user_id': user_id.id,
             'origin': ",".join(sorted([production.name for production in self])),
         })
@@ -2474,16 +2477,16 @@ class MrpProduction(models.Model):
         workorders_to_unlink = self.env['mrp.workorder']
         # For draft MO, all the work will be done by compute methods.
         # For cancelled and done MO, we don't want to do anything more than assinging the BoM.
-        if self.state == 'draft' and self.bom_id == bom:
-            # Empties `bom_id` field so when the BoM is reassigns to this field, depending computes
-            # will be triggered (doesn't happen if the field's value doesn't change).
-            self.bom_id = False
+        if self.state == 'draft':
+            # Don't straight up delete the moves/workorders but keep them for deletion after
+            # the BoM has been assigned (and thus after new moves/WO have been created).
+            moves_to_unlink = self.move_raw_ids
+            workorders_to_unlink = self.workorder_ids
+            if self.bom_id == bom:
+                # Empty the `bom_id` field so that, when the BoM is reassigned to this field, depending
+                # computes are re-triggered (it doesn't happen if the value of the field doesn't change).
+                self.bom_id = False
         if self.state in ['cancel', 'done', 'draft']:
-            if self.state == 'draft':
-                # Don't straight delete the moves/workorders to avoid to cancel the MO, those will
-                # be deleted once the BoM is assigned (and thus after new moves/WO were created).
-                moves_to_unlink = self.move_raw_ids
-                workorders_to_unlink = self.workorder_ids
             self.bom_id = bom
             moves_to_unlink.unlink()
             workorders_to_unlink.unlink()
@@ -2883,6 +2886,21 @@ class MrpProduction(models.Model):
             action = self.env.ref("stock.label_lot_template").report_action(lot_id.id, config=False)
             clean_action(action, self.env)
             return action
+
+    def _autoprint_mass_generated_lots(self):
+        actions = []
+        productions_to_print = self.filtered(lambda p: p.picking_type_id.auto_print_generated_mrp_lot)
+        productions_by_print_formats = productions_to_print.grouped(lambda p: p.picking_type_id.generated_mrp_lot_label_to_print)
+        for print_format in productions_to_print.picking_type_id.mapped('generated_mrp_lot_label_to_print'):
+            grouped_productions = productions_by_print_formats.get(print_format)
+            lots_to_print = grouped_productions.mapped('lot_producing_id')
+            if print_format == 'pdf':
+                action = self.env.ref("stock.action_report_lot_label").report_action(lots_to_print.ids, config=False)
+            elif print_format == 'zpl':
+                action = self.env.ref("stock.label_lot_template").report_action(lots_to_print.ids, config=False)
+            clean_action(action, self.env)
+            actions.append(action)
+        return actions
 
     def _prepare_finished_extra_vals(self):
         self.ensure_one()
