@@ -1,25 +1,28 @@
 # Translation of Odoo Server.
 # This file contains the translation of the following modules:
-# 	* uom
+# * uom
 #
 # Translators:
 # Wil Odoo, 2024
 # Manon Rondou, 2024
 #
+# Weblate <noreply-mt-weblate@weblate.org>, 2026.
+# "Manon Rondou (ronm)" <ronm@odoo.com>, 2026.
 msgid ""
 msgstr ""
 "Project-Id-Version: Odoo Server 18.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-12-29 18:38+0000\n"
-"PO-Revision-Date: 2024-09-25 09:42+0000\n"
-"Last-Translator: Manon Rondou, 2024\n"
-"Language-Team: French (https://app.transifex.com/odoo/teams/41243/fr/)\n"
+"POT-Creation-Date: 2026-04-10 18:39+0000\n"
+"PO-Revision-Date: 2026-04-14 08:23+0000\n"
+"Last-Translator: Weblate <noreply-mt-weblate@weblate.org>\n"
+"Language-Team: French <https://translate.odoo.com/projects/odoo-18/uom/fr/>\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: \n"
-"Plural-Forms: nplurals=3; plural=(n == 0 || n == 1) ? 0 : n != 0 && n % "
-"1000000 == 0 ? 1 : 2;\n"
+"Plural-Forms: nplurals=3; plural=(n == 0 || n == 1) ? 0 : ((n != 0 && n % "
+"1000000 == 0) ? 1 : 2);\n"
+"X-Generator: Weblate 5.16.2\n"
 
 #. module: uom
 #: model_terms:ir.ui.view,arch_db:uom.product_uom_form_view
@@ -132,6 +135,11 @@ msgid "Dozens"
 msgstr "Douzaines"
 
 #. module: uom
+#: model:uom.category,name:uom.product_uom_categ_energy
+msgid "Energy"
+msgstr "Énergie"
+
+#. module: uom
 #: model_terms:ir.ui.view,arch_db:uom.uom_uom_view_search
 msgid "Group By"
 msgstr "Regrouper par"
@@ -168,6 +176,16 @@ msgid "ID"
 msgstr "ID"
 
 #. module: uom
+#: model:uom.uom,name:uom.product_uom_kwh
+msgid "KWH"
+msgstr "KWH"
+
+#. module: uom
+#: model:uom.uom,name:uom.product_uom_litre
+msgid "L"
+msgstr "L"
+
+#. module: uom
 #: model:ir.model.fields,field_description:uom.field_uom_category__write_uid
 #: model:ir.model.fields,field_description:uom.field_uom_uom__write_uid
 msgid "Last Updated by"
@@ -188,6 +206,11 @@ msgstr "Longueur / Distance"
 #: model:res.groups,name:uom.group_uom
 msgid "Manage Multiple Units of Measure"
 msgstr "Gérer plusieurs unités de mesure"
+
+#. module: uom
+#: model:uom.uom,name:uom.product_uom_minute
+msgid "Minutes"
+msgstr "Minutes"
 
 #. module: uom
 #: model:ir.model,name:uom.model_uom_uom
@@ -469,6 +492,11 @@ msgid "ft³"
 msgstr "ft³"
 
 #. module: uom
+#: model:uom.uom,name:uom.product_uom_gram
+msgid "g"
+msgstr "g"
+
+#. module: uom
 #: model:uom.uom,name:uom.product_uom_gal
 msgid "gal (US)"
 msgstr "gal (US)"
@@ -499,6 +527,11 @@ msgid "lb"
 msgstr "lb"
 
 #. module: uom
+#: model:uom.uom,name:uom.product_uom_meter
+msgid "m"
+msgstr "m"
+
+#. module: uom
 #: model:uom.uom,name:uom.product_uom_mile
 msgid "mi"
 msgstr "mi"
@@ -527,6 +560,11 @@ msgstr "oz"
 #: model:uom.uom,name:uom.product_uom_qt
 msgid "qt (US)"
 msgstr "qt (US)"
+
+#. module: uom
+#: model:uom.uom,name:uom.product_uom_ton
+msgid "t"
+msgstr "t"
 
 #. module: uom
 #: model:uom.uom,name:uom.product_uom_yard

@@ -226,9 +226,9 @@ export class ProductScreen extends Component {
                 "find_product_by_barcode",
                 [odoo.pos_session_id, code.base_code, this.pos.config.id]
             );
-            await this.pos.processProductAttributes();
 
             if (records && records["product.product"].length > 0) {
+                await this.pos.processProductAttributesByProducts(records["product.product"]);
                 product = records["product.product"][0];
                 await this.pos._loadMissingPricelistItems([product]);
             }
@@ -499,7 +499,9 @@ export class ProductScreen extends Component {
 
         const { limit_categories, iface_available_categ_ids } = this.pos.config;
         if (limit_categories && iface_available_categ_ids.length > 0) {
-            const categIds = iface_available_categ_ids.map((categ) => categ.id);
+            const categIds = iface_available_categ_ids.flatMap((categ) =>
+                categ.getAllChildren().map((c) => c.id)
+            );
             domain.push(["pos_categ_ids", "in", categIds]);
         }
         const product = await this.pos.data.searchRead(
@@ -513,7 +515,7 @@ export class ProductScreen extends Component {
             }
         );
 
-        await this.pos.processProductAttributes();
+        await this.pos.processProductAttributesByProducts(product);
         return product;
     }
 

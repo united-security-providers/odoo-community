@@ -1,5 +1,6 @@
 /* global waitForWebfonts */
 
+import { Domain } from "@web/core/domain";
 import { Mutex } from "@web/core/utils/concurrency";
 import { markRaw } from "@odoo/owl";
 import { floatIsZero } from "@web/core/utils/numbers";
@@ -163,6 +164,7 @@ export class PosStore extends Reactive {
         });
 
         initLNA(this.notification);
+        this.canUserCreateProduct = await user.checkAccessRight("product.product", "create");
     }
 
     get firstScreen() {
@@ -373,12 +375,20 @@ export class PosStore extends Reactive {
         }
     }
     async processProductAttributes() {
+        const products = this.models["product.product"].getAll();
+        await this.processProductAttributesByProducts(products);
+    }
+
+    async processProductAttributesByProducts(products) {
+        if (!products?.length) {
+            return;
+        }
         const productIds = new Set();
         const productTmplIds = new Set();
         const productByTmplId = {};
 
-        for (const product of this.models["product.product"].getAll()) {
-            if (product.product_template_variant_value_ids.length > 0) {
+        for (const product of products) {
+            if (product.raw?.product_template_variant_value_ids?.length > 0) {
                 productTmplIds.add(product.raw.product_tmpl_id);
                 productIds.add(product.id);
 
@@ -391,17 +401,17 @@ export class PosStore extends Reactive {
         }
 
         if (productIds.size > 0) {
-            await this.data.searchRead("product.product", [
+            const missingVariants = await this.data.searchRead("product.product", [
                 "&",
                 ["id", "not in", [...productIds]],
                 ["product_tmpl_id", "in", [...productTmplIds]],
             ]);
-        }
-
-        for (const product of this.models["product.product"].filter(
-            (p) => !productIds.has(p.id) && p.product_template_variant_value_ids.length > 0
-        )) {
-            productByTmplId[product.raw.product_tmpl_id].push(product);
+            for (const product of missingVariants.filter(
+                (p) =>
+                    !productIds.has(p.id) && p.raw?.product_template_variant_value_ids?.length > 0
+            )) {
+                productByTmplId[product.raw.product_tmpl_id].push(product);
+            }
         }
 
         for (const products of Object.values(productByTmplId)) {
@@ -412,6 +422,28 @@ export class PosStore extends Reactive {
                 this.mainProductVariant[products[i].id] = products[nbrProduct - 1];
             }
         }
+
+        this.productAttributesExclusion = this.computeProductAttributesExclusion();
+    }
+
+    computeProductAttributesExclusion() {
+        const exclusions = new Map();
+
+        const addExclusion = (key, value) => {
+            if (!exclusions.has(key)) {
+                exclusions.set(key, new Set());
+            }
+            exclusions.get(key).add(value);
+        };
+
+        for (const exclusion of this.models["product.template.attribute.exclusion"].getAll()) {
+            const ptavId = exclusion.product_template_attribute_value_id.id;
+            for (const { id: valueId } of exclusion.value_ids) {
+                addExclusion(ptavId, valueId);
+                addExclusion(valueId, ptavId);
+            }
+        }
+        return exclusions;
     }
 
     async onDeleteOrder(order) {
@@ -504,6 +536,9 @@ export class PosStore extends Reactive {
     computeProductPricelistCache(data) {
         if (data) {
             data = this.models[data.model].readMany(data.ids);
+            if (data.length === 0) {
+                return;
+            }
         }
         computeProductPricelistCache(this, data);
     }
@@ -594,10 +629,21 @@ export class PosStore extends Reactive {
             );
         }
         const attributeLinesValues = attributeLines.map((attr) => attr.product_template_value_ids);
-        if (attributeLinesValues.some((values) => values.length > 1 || values[0].is_custom)) {
+        if (
+            attributeLinesValues.some(
+                (values) =>
+                    values.length > 1 ||
+                    values[0].is_custom ||
+                    values[0].attribute_id.display_type === "multi"
+            )
+        ) {
             let defaultValues = {};
-            const match = product.barcode && product.barcode.includes(this.searchProductWord);
-            if (this.searchProductWord && match) {
+            const searchMatch =
+                this.searchProductWord &&
+                product.barcode &&
+                product.barcode.includes(this.searchProductWord);
+            const scanMatche = opts.code && product.barcode === opts.code.base_code;
+            if (searchMatch || scanMatche) {
                 defaultValues = Object.fromEntries(
                     product.product_template_variant_value_ids.map((value) => [
                         value.attribute_line_id.id,
@@ -879,8 +925,7 @@ export class PosStore extends Reactive {
         if (!values.product_id.isCombo() && vals.price_unit === undefined) {
             values.price_unit = values.product_id.get_price(order.pricelist_id, values.qty);
         }
-        const isScannedProduct = opts.code && opts.code.type === "product";
-        if (values.price_extra && !isScannedProduct) {
+        if (values.price_extra) {
             const price = values.product_id.get_price(
                 order.pricelist_id,
                 values.qty,
@@ -903,7 +948,9 @@ export class PosStore extends Reactive {
                 line,
                 related_lines
             );
-            related_lines.forEach((line) => line.set_unit_price(price));
+            related_lines
+                .filter((line) => line.price_type !== "manual")
+                .forEach((line) => line.set_unit_price(price));
         }
         line.setOptions(options);
         this.selectOrderLine(order, line);
@@ -1339,7 +1386,10 @@ export class PosStore extends Reactive {
         }
     }
     async getServerOrders() {
-        return await this.loadServerOrders([
+        return await this.loadServerOrders(this.getServerOrdersDomain().toList());
+    }
+    getServerOrdersDomain() {
+        return new Domain([
             ["config_id", "in", [...this.config.raw.trusted_config_ids, this.config.id]],
             ["state", "=", "draft"],
         ]);
@@ -1722,7 +1772,7 @@ export class PosStore extends Reactive {
                 );
                 changes.new = [];
                 if (!printed) {
-                    unsuccedPrints.push("Detailed Receipt");
+                    unsuccedPrints.push(_t("Detailed Receipt"));
                 } else {
                     isPrinted = true;
                 }
@@ -1742,7 +1792,7 @@ export class PosStore extends Reactive {
             if (orderChange.generalNote && anyChangesToPrint) {
                 const printed = await this.printReceipts(order, printer, "Message", []);
                 if (!printed) {
-                    unsuccedPrints.push("General Message");
+                    unsuccedPrints.push(_t("General Message"));
                 } else {
                     isPrinted = true;
                 }
@@ -1936,10 +1986,16 @@ export class PosStore extends Reactive {
             }
         );
     }
+    get hasProductCreationAccess() {
+        return this.canUserCreateProduct;
+    }
+
+    // TODO: Remove in master. Use `hasProductCreationAccess` instead.
     async allowProductCreation() {
-        return await user.checkAccessRight("product.product", "create");
+        return this.hasProductCreationAccess;
     }
     orderDetailsProps(order) {
+        const oldPaymentIds = order.payment_ids.map((p) => p.id);
         return {
             resModel: "pos.order",
             resId: order.id,
@@ -1948,10 +2004,7 @@ export class PosStore extends Reactive {
             },
             onRecordSaved: async (record) => {
                 await this.data.read("pos.order", [record.evalContext.id]);
-                await this.data.read(
-                    "pos.payment",
-                    order.payment_ids.map((p) => p.id)
-                );
+                await this.data.read("pos.payment", oldPaymentIds);
                 this.action.doAction({
                     type: "ir.actions.act_window_close",
                 });

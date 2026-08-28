@@ -341,9 +341,7 @@ class Field(MetaField('DummyField', (object,), {}), typing.Generic[T]):
         return "%s.%s" % (self.model_name, self.name)
 
     def __repr__(self):
-        if self.name is None:
-            return f"{'<%s.%s>'!r}" % (__name__, type(self).__name__)
-        return f"{'%s.%s'!r}" % (self.model_name, self.name)
+        return repr(str(self))
 
     ############################################################################
     #
@@ -1584,6 +1582,14 @@ class Float(Field[float]):
         :class:`~odoo.addons.base.models.decimal_precision.DecimalPrecision` record name.
     :type digits: tuple(int,int) or str
 
+    :param min_display_digits: An int or a string referencing a
+        :class:`~odoo.addons.base.models.decimal_precision.DecimalPrecision` record name.
+        Represents the minimum number of decimal digits to display in the UI.
+        So if it's equal to 3:
+        - `3.1` will be shown as `'3.100'`.
+        - `3.1234` will be shown as `'3.1234'`.
+    :type min_display_digits: int or str
+
     When a float is a quantity associated with an unit of measure, it is important
     to use the right tool to compare or round values with the correct precision.
 
@@ -1617,10 +1623,19 @@ class Float(Field[float]):
 
     type = 'float'
     _digits = None                      # digits argument passed to class initializer
+    _min_display_digits = None
     aggregator = 'sum'
 
-    def __init__(self, string: str | Sentinel = SENTINEL, digits: str | tuple[int, int] | None | Sentinel = SENTINEL, **kwargs):
-        super(Float, self).__init__(string=string, _digits=digits, **kwargs)
+    def __init__(
+        self,
+        string: str | Sentinel = SENTINEL,
+        digits: str | tuple[int, int] | typing.Literal[0, False] | Sentinel | None = SENTINEL,
+        min_display_digits: str | int | Sentinel | None = SENTINEL,
+        **kwargs,
+    ):
+        if digits is SENTINEL and min_display_digits is not SENTINEL:
+            digits = False
+        super().__init__(string=string, _digits=digits, _min_display_digits=min_display_digits, **kwargs)
 
     @property
     def _column_type(self):
@@ -1639,10 +1654,18 @@ class Float(Field[float]):
         else:
             return self._digits
 
+    def get_min_display_digits(self, env):
+        if isinstance(self._min_display_digits, str):
+            return env['decimal.precision'].precision_get(self._min_display_digits)
+        return self._min_display_digits
+
     _related__digits = property(attrgetter('_digits'))
 
     def _description_digits(self, env):
         return self.get_digits(env)
+
+    def _description_min_display_digits(self, env):
+        return self.get_min_display_digits(env)
 
     def convert_to_column(self, value, record, values=None, validate=True):
         value_float = value = float(value or 0.0)
@@ -1789,6 +1812,11 @@ class _String(Field[str | typing.Literal[False]]):
 
     _related_translate = property(attrgetter('translate'))
 
+    def _compute_related(self, records):
+        if records.env.context.get('edit_translations'):
+            records = records.with_context(edit_translations=None, check_translations=True)
+        super()._compute_related(records)
+
     def _description_translate(self, env):
         return bool(self.translate)
 
@@ -1846,19 +1874,31 @@ class _String(Field[str | typing.Literal[False]]):
         if value is None:
             return False
         if callable(self.translate) and record.env.context.get('edit_translations'):
+            field_ = self
+            record_ = record
+            while not field_.store and field_.related:
+                record_ = record_.mapped(field_.related.rsplit('.', 1)[0])[:1]
+                field_ = field_.related_field
+            if field_ is not self:
+                return field_.convert_to_record(value, record_)
+
             if not self.get_trans_terms(value):
                 return value
             base_lang = record._get_base_lang()
             lang = record.env.lang or 'en_US'
+            delay_translation = value != record.with_context(edit_translations=None, check_translations=None, lang=lang)[self.name]
 
             if lang != base_lang:
                 base_value = record.with_context(edit_translations=None, check_translations=True, lang=base_lang)[self.name]
-                base_terms_iter = iter(self.get_trans_terms(base_value))
-                get_base = lambda term: next(base_terms_iter)
+                base_terms = self.get_trans_terms(base_value)
+                translated_terms = self.get_trans_terms(value) if value != base_value else base_terms
+                if len(base_terms) != len(translated_terms):
+                    # term number mismatch, ignore all translations
+                    value = base_value
+                    translated_terms = base_terms
+                get_base = dict(zip(translated_terms, base_terms)).__getitem__
             else:
                 get_base = lambda term: term
-
-            delay_translation = value != record.with_context(edit_translations=None, check_translations=None, lang=lang)[self.name]
 
             # use a wrapper to let the frontend js code identify each term and
             # its metadata in the 'edit_translations' context
@@ -1957,7 +1997,7 @@ class _String(Field[str | typing.Literal[False]]):
 
         # not dirty fields
         if not dirty:
-            if self.compute and self.inverse:
+            if self.compute and self.inverse and any(records._ids):
                 # invalidate the values in other languages to force their recomputation
                 values = [{lang: cache_value} for _id in records._ids]
                 cache.update_raw(records, self, values, dirty=False)
@@ -2746,7 +2786,14 @@ class Image(Binary):
             record.env.cache.set(record, self, value, dirty=(self.store and self.column_type))
 
     def _image_process(self, value, env):
-        if self.readonly and not self.max_width and not self.max_height:
+        if self.readonly and (
+            (not self.max_width and not self.max_height)
+            or (
+                isinstance(self.related_field, Image)
+                and self.max_width == self.related_field.max_width
+                and self.max_height == self.related_field.max_height
+            )
+        ):
             # no need to process images for computed fields, or related fields
             return value
         try:

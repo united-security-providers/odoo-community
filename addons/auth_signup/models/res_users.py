@@ -80,7 +80,7 @@ class ResUsers(models.Model):
                 values.pop('login', None)
                 values.pop('name', None)
                 partner_user.write(values)
-                if not partner_user.login_date:
+                if not partner_user.login_date and partner_user._is_internal():
                     partner_user._notify_inviter()
                 return (partner_user.login, values.get('password'))
             else:
@@ -94,7 +94,6 @@ class ResUsers(models.Model):
                     values['company_id'] = partner.company_id.id
                     values['company_ids'] = [(6, 0, [partner.company_id.id])]
                 partner_user = self._signup_create_user(values)
-                partner_user._notify_inviter()
         else:
             # no token, sign up an external user
             values['email'] = values.get('email') or values.get('login')
@@ -289,13 +288,14 @@ class ResUsers(models.Model):
                 'email_to': self.email
             }
 
-            body = self.env['mail.render.mixin']._render_template(
+            user_lang = self.lang or self.env.lang or 'en_US'
+            body = self.env['mail.render.mixin'].with_context(lang=user_lang)._render_template(
                     'auth_signup.alert_login_new_device',
                     model='res.users', res_ids=self.ids,
                     engine='qweb_view', options={'post_process': True},
                     add_context=self._prepare_new_device_notice_values())[self.id]
             mail = self.env['mail.mail'].sudo().create({
-                'subject': _('New Connection to your Account'),
+                'subject': self.with_context(lang=user_lang).env._('New Connection to your Account'),
                 'email_from': self.company_id.email_formatted or self.email_formatted,
                 'body_html': body,
                 **email_values,
@@ -359,7 +359,7 @@ class ResUsers(models.Model):
 
     def write(self, vals):
         if 'active' in vals and not vals['active']:
-            self.partner_id.signup_cancel()
+            self.partner_id.sudo().signup_cancel()
         return super().write(vals)
 
     @api.ondelete(at_uninstall=False)

@@ -8,15 +8,16 @@
 # Tiffany Chang, 2024
 # Wil Odoo, 2024
 # Junko Augias, 2025
-# Ryoko Tsuda <ryoko@quartile.co>, 2025.
-# "Junko Augias (juau)" <juau@odoo.com>, 2025.
+# Ryoko Tsuda <ryoko@quartile.co>, 2025, 2026.
+# "Junko Augias (juau)" <juau@odoo.com>, 2025, 2026.
+# Weblate <noreply-mt-weblate@weblate.org>, 2026.
 msgid ""
 msgstr ""
 "Project-Id-Version: Odoo Server 18.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-12-29 18:37+0000\n"
-"PO-Revision-Date: 2025-12-26 13:59+0000\n"
-"Last-Translator: \"Junko Augias (juau)\" <juau@odoo.com>\n"
+"POT-Creation-Date: 2026-04-03 18:40+0000\n"
+"PO-Revision-Date: 2026-05-26 11:15+0000\n"
+"Last-Translator: Ryoko Tsuda <ryoko@quartile.co>\n"
 "Language-Team: Japanese <https://translate.odoo.com/projects/odoo-18/payment/"
 "ja/>\n"
 "Language: ja\n"
@@ -24,7 +25,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: \n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Generator: Weblate 5.14.3\n"
+"X-Generator: Weblate 5.17\n"
 
 #. module: payment
 #: model:ir.model.fields,field_description:payment.field_payment_provider_onboarding_wizard___data_fetched
@@ -311,7 +312,7 @@ msgstr "Stripeを有効化"
 #: model:ir.model.fields,field_description:payment.field_payment_method__active
 #: model:ir.model.fields,field_description:payment.field_payment_token__active
 msgid "Active"
-msgstr "アクティブ"
+msgstr "有効"
 
 #. module: payment
 #: model:ir.model.fields,field_description:payment.field_payment_transaction__partner_address
@@ -434,6 +435,11 @@ msgid "Apply"
 msgstr "適用"
 
 #. module: payment
+#: model:payment.method,name:payment.payment_method_appota
+msgid "Appota"
+msgstr "Appota"
+
+#. module: payment
 #: model_terms:ir.ui.view,arch_db:payment.payment_token_form
 #: model_terms:ir.ui.view,arch_db:payment.payment_token_search
 msgid "Archived"
@@ -450,8 +456,7 @@ msgstr "この決済方法を本当に削除しますか？"
 msgid ""
 "Are you sure you want to void the authorized transaction? This action can't "
 "be undone."
-msgstr ""
-"承認されたトランザクションを無効にしますか?このアクションは元に戻せません。"
+msgstr "承認された取引を無効にしますか?このアクションは元に戻せません。"
 
 #. module: payment
 #: model:payment.method,name:payment.payment_method_argencard
@@ -496,7 +501,7 @@ msgstr "認証済金額"
 #. module: payment
 #: model_terms:ir.ui.view,arch_db:payment.payment_provider_form
 msgid "Availability"
-msgstr "利用可能"
+msgstr "利用可否"
 
 #. module: payment
 #: model_terms:ir.ui.view,arch_db:payment.availability_report
@@ -1017,7 +1022,7 @@ msgstr "Davivienda"
 #. module: payment
 #: model:ir.model.fields,help:payment.field_payment_provider__sequence
 msgid "Define the display order"
-msgstr "表示順序を決定します"
+msgstr "表示順序を決定"
 
 #. module: payment
 #: model:payment.provider,name:payment.payment_provider_demo
@@ -1426,6 +1431,11 @@ msgstr "Kredivo"
 #: model:payment.method,name:payment.payment_method_krungthai_bank
 msgid "KrungThai Bank"
 msgstr "KrungThai Bank"
+
+#. module: payment
+#: model:payment.method,name:payment.payment_method_kfh
+msgid "Kuwait Finance House"
+msgstr "クウェート・ファイナンス・ハウス"
 
 #. module: payment
 #: model:payment.method,name:payment.payment_method_linepay
@@ -1966,7 +1976,7 @@ msgstr "支払詳細"
 #. module: payment
 #: model_terms:ir.ui.view,arch_db:payment.payment_provider_form
 msgid "Payment Followup"
-msgstr "支払フォローアップ"
+msgstr "支払い督促"
 
 #. module: payment
 #: model_terms:ir.ui.view,arch_db:payment.payment_provider_form
@@ -2378,7 +2388,7 @@ msgstr "国を選択。制限しない場合は空欄にします。"
 #. module: payment
 #: model_terms:ir.ui.view,arch_db:payment.payment_provider_form
 msgid "Select currencies. Leave empty not to restrict any."
-msgstr "通貨を選択して下さい。何も制限しないように空欄にしておいて下さい。"
+msgstr "通貨を選択。制限しない場合は空欄にします。"
 
 #. module: payment
 #: model_terms:ir.ui.view,arch_db:payment.payment_method_form
@@ -2447,7 +2457,7 @@ msgstr "元取引"
 #: model_terms:ir.ui.view,arch_db:payment.payment_provider_search
 #: model_terms:ir.ui.view,arch_db:payment.payment_transaction_form
 msgid "State"
-msgstr "状態"
+msgstr "都道府県・州"
 
 #. module: payment
 #: model:ir.model.fields,field_description:payment.field_payment_transaction__state
@@ -2530,7 +2540,7 @@ msgstr "テストモード"
 #. module: payment
 #: model_terms:ir.ui.view,arch_db:payment.state_header
 msgid "Thank you!"
-msgstr "回答にご協力頂き、誠に有難う御座います！"
+msgstr "ありがとうございました!"
 
 #. module: payment
 #. odoo-python
@@ -2796,7 +2806,7 @@ msgstr "参照%(ref)sの取引( %(amount)s用)が確定されました (%(provid
 #. module: payment
 #: model_terms:ir.actions.act_window,help:payment.action_payment_transaction
 msgid "There are no transactions to show"
-msgstr "表示するトランザクションがありません"
+msgstr "表示する取引がありません"
 
 #. module: payment
 #: model_terms:ir.actions.act_window,help:payment.action_payment_token
@@ -3009,6 +3019,16 @@ msgid "VISA"
 msgstr "VISA"
 
 #. module: payment
+#: model:payment.method,name:payment.payment_method_vnptwallet
+msgid "VNPT Money"
+msgstr "VNPTマネー"
+
+#. module: payment
+#: model:payment.method,name:payment.payment_method_vpbank
+msgid "VP Bank"
+msgstr "VP銀行"
+
+#. module: payment
 #: model:ir.model.fields.selection,name:payment.selection__payment_transaction__operation__validation
 msgid "Validation of the payment method"
 msgstr "支払方法の検証"
@@ -3019,9 +3039,19 @@ msgid "Venmo"
 msgstr "Venmo"
 
 #. module: payment
+#: model:payment.method,name:payment.payment_method_vietcapital
+msgid "Viet Capital"
+msgstr "Viet Capital"
+
+#. module: payment
 #: model:payment.method,name:payment.payment_method_vietcom
 msgid "Vietcombank"
 msgstr "Vietcombank"
+
+#. module: payment
+#: model:payment.method,name:payment.payment_method_viettelpay
+msgid "Viettel Pay"
+msgstr "Viettel Pay"
 
 #. module: payment
 #: model:payment.method,name:payment.payment_method_vipps
@@ -3037,6 +3067,11 @@ msgstr "残額をボイドする"
 #: model_terms:ir.ui.view,arch_db:payment.payment_transaction_form
 msgid "Void Transaction"
 msgstr "無効な取引"
+
+#. module: payment
+#: model:payment.method,name:payment.payment_method_wero
+msgid "WERO"
+msgstr ""
 
 #. module: payment
 #: model:payment.method,name:payment.payment_method_wallets_india
@@ -3109,6 +3144,11 @@ msgid "Wire Transfer"
 msgstr "電信送金"
 
 #. module: payment
+#: model:payment.method,name:payment.payment_method_woori
+msgid "Woori Bank"
+msgstr "Woori Bank"
+
+#. module: payment
 #: model:payment.provider,name:payment.payment_provider_worldline
 msgid "Worldline"
 msgstr "Worldline"
@@ -3125,8 +3165,8 @@ msgid ""
 "You can't unarchive tokens linked to inactive payment methods or disabled "
 "providers."
 msgstr ""
-"非アクティブな支払方法または無効なプロバイダーにリンクされたトークンをアーカ"
-"イブ解除することはできません。"
+"無効な支払方法または無効なプロバイダーにリンクされたトークンをアーカイブ解除"
+"することはできません。"
 
 #. module: payment
 #. odoo-python
@@ -3321,6 +3361,7 @@ msgstr "エクスプレス・チェックアウトはサポートされていま
 
 #. module: payment
 #: model:payment.method,name:payment.payment_method_ideal
+#: model:payment.method,name:payment.payment_method_ideal_brand
 msgid "iDEAL"
 msgstr "iDEAL"
 

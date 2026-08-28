@@ -1,24 +1,28 @@
 # Translation of Odoo Server.
 # This file contains the translation of the following modules:
-# 	* uom
+# * uom
 #
 # Translators:
 # Wil Odoo, 2024
 # Junko Augias, 2025
 #
+# Weblate <noreply-mt-weblate@weblate.org>, 2026.
+# "Junko Augias (juau)" <juau@odoo.com>, 2026.
 msgid ""
 msgstr ""
 "Project-Id-Version: Odoo Server 18.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-12-29 18:38+0000\n"
-"PO-Revision-Date: 2024-09-25 09:42+0000\n"
-"Last-Translator: Junko Augias, 2025\n"
-"Language-Team: Japanese (https://app.transifex.com/odoo/teams/41243/ja/)\n"
+"POT-Creation-Date: 2026-04-10 18:39+0000\n"
+"PO-Revision-Date: 2026-05-17 05:49+0000\n"
+"Last-Translator: Weblate <noreply-mt-weblate@weblate.org>\n"
+"Language-Team: Japanese <https://translate.odoo.com/projects/odoo-18/uom/ja/>"
+"\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: \n"
 "Plural-Forms: nplurals=1; plural=0;\n"
+"X-Generator: Weblate 5.17\n"
 
 #. module: uom
 #: model_terms:ir.ui.view,arch_db:uom.product_uom_form_view
@@ -49,7 +53,7 @@ msgstr ""
 #. module: uom
 #: model:ir.model.fields,field_description:uom.field_uom_uom__active
 msgid "Active"
-msgstr "アクティブ"
+msgstr "有効"
 
 #. module: uom
 #: model_terms:ir.actions.act_window,help:uom.product_uom_form_action
@@ -130,6 +134,11 @@ msgid "Dozens"
 msgstr "ダース"
 
 #. module: uom
+#: model:uom.category,name:uom.product_uom_categ_energy
+msgid "Energy"
+msgstr "エネルギー"
+
+#. module: uom
 #: model_terms:ir.ui.view,arch_db:uom.uom_uom_view_search
 msgid "Group By"
 msgstr "グループ化"
@@ -164,6 +173,16 @@ msgid "ID"
 msgstr "ID"
 
 #. module: uom
+#: model:uom.uom,name:uom.product_uom_kwh
+msgid "KWH"
+msgstr "キロワット時"
+
+#. module: uom
+#: model:uom.uom,name:uom.product_uom_litre
+msgid "L"
+msgstr "L"
+
+#. module: uom
 #: model:ir.model.fields,field_description:uom.field_uom_category__write_uid
 #: model:ir.model.fields,field_description:uom.field_uom_uom__write_uid
 msgid "Last Updated by"
@@ -184,6 +203,11 @@ msgstr "長さ / 距離"
 #: model:res.groups,name:uom.group_uom
 msgid "Manage Multiple Units of Measure"
 msgstr "複数の単位を管理"
+
+#. module: uom
+#: model:uom.uom,name:uom.product_uom_minute
+msgid "Minutes"
+msgstr "分"
 
 #. module: uom
 #: model:ir.model,name:uom.model_uom_uom
@@ -323,8 +347,7 @@ msgstr "タイプ"
 msgid ""
 "Uncheck the active field to disable a unit of measure without deleting it."
 msgstr ""
-"アクティブ項目のチェックを外すことで、単位を削除することなく非表示にできま"
-"す。"
+"有効項目のチェックを外すことで、単位を削除することなく非表示にできます。"
 
 #. module: uom
 #: model:uom.category,name:uom.product_uom_categ_unit
@@ -454,6 +477,11 @@ msgid "ft³"
 msgstr "ft³"
 
 #. module: uom
+#: model:uom.uom,name:uom.product_uom_gram
+msgid "g"
+msgstr "g"
+
+#. module: uom
 #: model:uom.uom,name:uom.product_uom_gal
 msgid "gal (US)"
 msgstr "gal (US)"
@@ -484,6 +512,11 @@ msgid "lb"
 msgstr "lb"
 
 #. module: uom
+#: model:uom.uom,name:uom.product_uom_meter
+msgid "m"
+msgstr "m"
+
+#. module: uom
 #: model:uom.uom,name:uom.product_uom_mile
 msgid "mi"
 msgstr "mi"
@@ -512,6 +545,11 @@ msgstr "oz"
 #: model:uom.uom,name:uom.product_uom_qt
 msgid "qt (US)"
 msgstr "qt (US)"
+
+#. module: uom
+#: model:uom.uom,name:uom.product_uom_ton
+msgid "t"
+msgstr "t"
 
 #. module: uom
 #: model:uom.uom,name:uom.product_uom_yard

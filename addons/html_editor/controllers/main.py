@@ -361,6 +361,9 @@ class HTML_Editor(http.Controller):
         Creates a modified copy of an attachment and returns its image_src to be
         inserted into the DOM.
         """
+        format_error_msg = _("Uploaded image's format is not supported. Try with: %s", ', '.join(SUPPORTED_IMAGE_MIMETYPES.values()))
+        if mimetype and mimetype not in SUPPORTED_IMAGE_MIMETYPES:
+            return {'error': format_error_msg}
         self._clean_context()
         attachment = request.env['ir.attachment'].browse(attachment.id)
 
@@ -395,10 +398,11 @@ class HTML_Editor(http.Controller):
             # empty record set.
             request.env[fields['res_model']].browse(fields['res_id']).check_access('write')
 
-            # Sudo and SUPERUSER_ID because restricted editor will not be able
-            # to copy the record and the mimetype will be forced to plain text.
-            attachment = attachment.with_user(SUPERUSER_ID).sudo().copy(fields)
-            attachment = attachment.with_user(request.env.user.id).sudo(False)
+            # Sudo because restricted editor will not be able to copy the record
+            attachment = attachment.sudo().copy(fields).sudo(False)
+            # Override mimetype with SUPERUSER if it was forced to plain text
+            if attachment.mimetype == 'text/plain' != fields['mimetype']:
+                attachment.with_user(SUPERUSER_ID).mimetype = fields['mimetype']
 
         if alt_data:
             for size, per_type in alt_data.items():

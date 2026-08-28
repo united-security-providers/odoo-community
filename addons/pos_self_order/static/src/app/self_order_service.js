@@ -56,7 +56,7 @@ export class SelfOrder extends Reactive {
         this.currency = this.config.currency_id;
 
         this.markupDescriptions();
-        this.access_token = this.config.access_token;
+        this.access_token = odoo.access_token;
         this.lastEditedProductId = null;
         this.currentProduct = 0;
         this.currentTable = null;
@@ -515,7 +515,7 @@ export class SelfOrder extends Reactive {
                 order,
                 Object.values(printer.config.product_categories_ids)
             );
-            if (orderlines) {
+            if (orderlines.length > 0) {
                 const printingChanges = {
                     new: orderlines,
                     tracker: order.table_stand_number,
@@ -563,27 +563,25 @@ export class SelfOrder extends Reactive {
     }
 
     async initMobileData() {
-        if (this.config.self_ordering_mode !== "qr_code") {
-            if (
-                this.session &&
-                this.access_token &&
-                this.config.self_ordering_mode !== "consultation"
-            ) {
-                await this.getOrdersFromServer();
-                const tableIdentifier = this.router.getTableIdentifier();
+        if (
+            this.session &&
+            this.access_token &&
+            this.config.self_ordering_mode !== "consultation"
+        ) {
+            await this.getOrdersFromServer();
+            const tableIdentifier = this.router.getTableIdentifier();
 
-                if (tableIdentifier) {
-                    this.currentTable = this.models["restaurant.table"].find(
-                        (t) => t.identifier === tableIdentifier
-                    );
-                }
-
-                this.ordering = true;
+            if (tableIdentifier) {
+                this.currentTable = this.models["restaurant.table"].find(
+                    (t) => t.identifier === tableIdentifier
+                );
             }
 
-            if (!this.ordering) {
-                return;
-            }
+            this.ordering = true;
+        }
+
+        if (!this.ordering) {
+            return;
         }
     }
 

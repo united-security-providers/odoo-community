@@ -235,13 +235,9 @@ class MailActivity(models.Model):
 
         forbidden_ids = []
         for doc_model, docid_actids in model_docid_actids.items():
-            documents = self.env[doc_model].browse(docid_actids)
-            doc_operation = getattr(
-                documents, '_mail_post_access', 'read' if operation == 'read' else 'write'
-            )
-            if doc_result := documents._check_access(doc_operation):
-                for document in doc_result[0]:
-                    forbidden_ids.extend(docid_actids[document.id])
+            allowed = self.env['mail.message']._filter_records_for_message_operation(doc_model, docid_actids, operation)
+            for document_id in [doc_id for doc_id in docid_actids if doc_id not in allowed.ids]:
+                forbidden_ids.extend(docid_actids[document_id])
 
         if forbidden_ids:
             forbidden = self.browse(forbidden_ids)
@@ -383,11 +379,10 @@ class MailActivity(models.Model):
 
         allowed_ids = defaultdict(set)
         for res_model, res_ids in model_ids.items():
-            records = self.env[res_model].browse(res_ids).exists()
-            # fall back on related document access right checks. Use the same as defined for mail.thread
-            # if available; otherwise fall back on read
-            operation = getattr(records, '_mail_post_access', 'read')
-            allowed_ids[res_model] = set(records._filtered_access(operation)._ids)
+            allowed = self.env['mail.message']._filter_records_for_message_operation(
+                res_model, res_ids, 'read',
+            )
+            allowed_ids[res_model] = set(allowed._ids)
 
         activities = self.browse(
             id_

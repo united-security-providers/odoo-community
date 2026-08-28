@@ -12,7 +12,7 @@ msgstr ""
 "Project-Id-Version: Odoo Server 18.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2025-12-29 18:38+0000\n"
-"PO-Revision-Date: 2026-01-10 09:03+0000\n"
+"PO-Revision-Date: 2026-08-04 13:10+0000\n"
 "Last-Translator: \"Junko Augias (juau)\" <juau@odoo.com>\n"
 "Language-Team: Japanese <https://translate.odoo.com/projects/odoo-18/"
 "gamification/ja/>\n"
@@ -21,7 +21,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: \n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Generator: Weblate 5.14.3\n"
+"X-Generator: Weblate 2026.6.1\n"
 
 #. module: gamification
 #: model:mail.template,body_html:gamification.email_template_goal_reminder
@@ -1144,8 +1144,8 @@ msgid ""
 msgstr ""
 "ランクとは、一定のカルマに対応するものです。カルマが多ければ多いほど、ランク"
 "が高くなります。\n"
-"これは、どのユーザが新しいか古いか、アクティブ度が高いか低いかを素早く知るた"
-"めに使用されます。"
+"これは、どのユーザが新しいか古いか、有効度が高いか低いかを素早く知るために使"
+"用されます。"
 
 #. module: gamification
 #: model:ir.model.fields.selection,name:gamification.selection__gamification_badge__rule_auth__users
@@ -1166,7 +1166,7 @@ msgstr "要アクション"
 #. module: gamification
 #: model:ir.model.fields,field_description:gamification.field_gamification_badge__active
 msgid "Active"
-msgstr "アクティブ"
+msgstr "有効"
 
 #. module: gamification
 #. odoo-python
@@ -1516,7 +1516,7 @@ msgstr "作成日"
 #. module: gamification
 #: model:ir.model.fields,field_description:gamification.field_gamification_goal_wizard__current
 msgid "Current"
-msgstr "流動"
+msgstr "現在"
 
 #. module: gamification
 #: model:ir.model.fields,field_description:gamification.field_gamification_goal__current
@@ -1636,10 +1636,10 @@ msgid ""
 "[('state', '=', 'done')]. The expression can contain reference to 'user' "
 "which is a browse record of the current user if not in batch mode."
 msgstr ""
-"レコードをフィルタリングするためのドメイン。 一般的な規則であり、ユーザに依存"
-"するものではありません。 [('state', '=', 'done')]。 式には、バッチモードでな"
-"い場合は現在のユーザの参照レコードである 'ユーザ'への参照を含めることができま"
-"す。"
+"レコードをフィルタリングするためのドメイン。 一般的なルールであり、ユーザに依"
+"存するものではありません。 [('state', '=', 'done')]。 式には、バッチモードで"
+"ない場合は現在のユーザの参照レコードである 'ユーザ'への参照を含めることができ"
+"ます。"
 
 #. module: gamification
 #: model:ir.model.fields.selection,name:gamification.selection__gamification_challenge__state__done
@@ -1689,7 +1689,7 @@ msgstr "排他的(完了または未完了)"
 #. module: gamification
 #: model:ir.model.fields.selection,name:gamification.selection__gamification_goal__state__failed
 msgid "Failed"
-msgstr "不合格"
+msgstr "失敗"
 
 #. module: gamification
 #: model:ir.model.fields,field_description:gamification.field_gamification_goal_definition__field_id
@@ -1751,7 +1751,7 @@ msgstr "from"
 #. module: gamification
 #: model:ir.model.fields,field_description:gamification.field_gamification_goal_definition__full_suffix
 msgid "Full Suffix"
-msgstr "完全な接尾辞"
+msgstr "完全なサフィックス"
 
 #. module: gamification
 #: model:ir.model.fields,field_description:gamification.field_gamification_karma_tracking__gain
@@ -2751,9 +2751,8 @@ msgstr "追跡を検索"
 msgid ""
 "Security rules to define who is allowed to manually grant badges. Not "
 "enforced for administrator."
-msgstr ""
-"バッジの手動付与の権限があるユーザを定義するセキュリティ規則。 管理者には適用"
-"されません。"
+msgstr "バッジの手動付与の権限があるユーザを定義するセキュリティルール。 管理者には適"
+"用されません。"
 
 #. module: gamification
 #: model_terms:ir.ui.view,arch_db:gamification.challenge_form_view
@@ -2878,7 +2877,7 @@ msgstr "開始目標"
 #: model_terms:ir.ui.view,arch_db:gamification.challenge_search_view
 #: model_terms:ir.ui.view,arch_db:gamification.goal_search_view
 msgid "State"
-msgstr "状態"
+msgstr "ステータス"
 
 #. module: gamification
 #: model_terms:ir.ui.view,arch_db:gamification.badge_form_view
@@ -2945,7 +2944,7 @@ msgstr "チャレンジ %s が終了しました。"
 #: model:ir.model.fields,help:gamification.field_gamification_goal__definition_suffix
 #: model:ir.model.fields,help:gamification.field_gamification_goal_definition__full_suffix
 msgid "The currency and suffix field"
-msgstr "通貨と接尾辞フィールド"
+msgstr "通貨とサフィックスフィールド"
 
 #. module: gamification
 #: model:ir.model.fields,help:gamification.field_gamification_goal_definition__field_date_id

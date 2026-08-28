@@ -93,14 +93,14 @@ class ProductTemplate(models.Model):
     # list_price: catalog price, user defined
     list_price = fields.Float(
         'Sales Price', default=1.0,
-        digits='Product Price',
+        min_display_digits='Product Price',
         tracking=True,
         help="Price at which the product is sold to customers.",
     )
     standard_price = fields.Float(
         'Cost', compute='_compute_standard_price',
         inverse='_set_standard_price', search='_search_standard_price',
-        digits='Product Price', groups="base.group_user",
+        min_display_digits='Product Price', groups="base.group_user",
         help="""Value of the product (automatically computed in AVCO).
         Used to value the product when the purchase cost is not known (e.g. inventory adjustment).
         Used to compute margins on sale orders.""")
@@ -650,7 +650,7 @@ class ProductTemplate(models.Model):
                     %s
                 </p>
                 <p>
-                    <a class="oe_link" href="https://www.odoo.com/documentation/18.0/_downloads/c2c6ce32294dfddffcfefcf2775f7a09/pdfquotebuilderexamples.zip">
+                    <a class="oe_link" href="https://www.odoo.com/documentation/18.0/_downloads/eaa2883bd361273b475c9765f64e3e0c/pdfquotebuilderexamples.zip">
                     %s
                     </a>
                 </p>
@@ -795,7 +795,8 @@ class ProductTemplate(models.Model):
             variants_to_unlink += all_variants - current_variants_to_activate
 
         if variants_to_activate:
-            variants_to_activate.write({'active': True})
+            # Only activate variants whose template is active
+            variants_to_activate.filtered(lambda v: v.product_tmpl_id.active).write({'active': True})
         if variants_to_create:
             Product.create(variants_to_create)
         if variants_to_unlink:
@@ -947,17 +948,38 @@ class ProductTemplate(models.Model):
         """
         self.ensure_one()
         product_template_attribute_values = self.valid_product_template_attribute_line_ids.product_template_value_ids
-        return {
-            ptav.id: [
-                value.id
-                for filter_line in ptav.exclude_for.filtered(
-                    lambda filter_line: filter_line.product_tmpl_id == self
-                ) for value in filter_line.value_ids if value.ptav_active
-            ]
-            for ptav in product_template_attribute_values if (
-                ptav.ptav_active or combination_ids and ptav.id in combination_ids
-            )
-        }
+        result = {}
+
+        domain_ptav = [('ptav_active', '=', True)]
+
+        if combination_ids:
+            domain_ptav = expression.OR([
+                domain_ptav,
+                [('id', 'in', combination_ids)]
+            ])
+
+        domain_ptav = expression.AND([
+            domain_ptav,
+            [('id', 'in', product_template_attribute_values.ids)],
+        ])
+
+        exclusion_ids_by_ptav = dict(self.env['product.template.attribute.exclusion']._read_group(
+            domain=[
+                ('product_template_attribute_value_id', 'any', domain_ptav),
+                ('product_tmpl_id', '=', self.id),
+            ],
+            groupby=['product_template_attribute_value_id'],
+            aggregates=['id:recordset'],
+        ))
+
+        for ptav in product_template_attribute_values:
+            if ptav.ptav_active or combination_ids and ptav.id in combination_ids:
+                if exclusions := exclusion_ids_by_ptav.get(ptav):
+                    result[ptav.id] = exclusions.value_ids.filtered(lambda x: x.ptav_active).ids
+                else:
+                    result[ptav.id] = []
+
+        return result
 
     def _get_parent_attribute_exclusions(self, parent_combination):
         """Get exclusions coming from the parent combination.
@@ -1240,6 +1262,11 @@ class ProductTemplate(models.Model):
         :return: a generator of product template attribute value
         """
         if not product_template_attribute_values_per_line:
+            return
+
+        product_template_attribute_values_per_line = [ptav for ptav in product_template_attribute_values_per_line if len(ptav)]
+        if not product_template_attribute_values_per_line:
+            yield self.env['product.template.attribute.value']
             return
 
         all_exclusions = {self.env['product.template.attribute.value'].browse(k):

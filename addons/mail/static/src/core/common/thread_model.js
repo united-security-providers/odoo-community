@@ -302,6 +302,8 @@ export class Thread extends Record {
         },
     });
     hasLoadingFailed = false;
+    /** @type {Error} */
+    hasLoadingFailedError;
     canPostOnReadonly;
     /** @type {luxon.DateTime} */
     last_interest_dt = Record.attr(undefined, { type: "datetime" });
@@ -402,6 +404,10 @@ export class Thread extends Record {
             this.typesAllowingCalls.includes(this.channel_type) &&
             !this.correspondent?.persona.eq(this.store.odoobot)
         );
+    }
+
+    get canPostMessage() {
+        return this.hasWriteAccess || (this.hasReadAccess && this.canPostOnReadonly);
     }
 
     get hasAttachmentPanel() {
@@ -678,11 +684,13 @@ export class Thread extends Record {
         }
         try {
             const { data, messages } = await this.fetchMessagesData({ after, around, before });
+            this.hasLoadingFailedError = undefined;
             this.store.insert(data, { html: true });
             this.hasLoadingFailed = false;
             return this.store.Message.insert(messages.reverse());
         } catch (e) {
             this.hasLoadingFailed = true;
+            this.hasLoadingFailedError = e;
             throw e;
         } finally {
             this.isLoaded = true;

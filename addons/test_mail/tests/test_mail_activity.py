@@ -75,6 +75,48 @@ class TestActivityRights(TestActivityCommon):
         self.assertTrue(activity.can_write)
         activity.write({'user_id': self.user_admin.id})
 
+    def test_activity_security_user_access_customized(self):
+        """ Test '_get_mail_message_access' support when scheduling activities. """
+        access_open, access_ro, access_locked = self.env['mail.test.access.custo'].with_user(self.user_admin).create([
+            {'name': 'Open'},
+            {'name': 'Open RO', 'is_readonly': True},
+            {'name': 'Locked', 'is_locked': True},
+        ])
+        admin_activities = self.env['mail.activity']
+        for record in access_open + access_ro + access_locked:
+            admin_activities += record.with_user(self.user_admin).activity_schedule(
+                'test_mail.mail_act_test_todo_generic',
+            )
+
+        # sanity checks on rule implementation
+        (access_open + access_ro + access_locked).with_user(self.user_employee).check_access('read')
+        access_open.with_user(self.user_employee).check_access('write')
+        with self.assertRaises(exceptions.AccessError):
+            (access_ro + access_locked).with_user(self.user_employee).check_access('write')
+
+        # '_get_mail_message_access' allows to post, hence posting activities
+        emp_new_1 = access_open.with_user(self.user_employee).activity_schedule(
+            'test_mail.mail_act_test_todo_generic',
+        )
+        emp_new_2 = access_ro.with_user(self.user_employee).activity_schedule(
+            'test_mail.mail_act_test_todo_generic',
+        )
+
+        with self.assertRaises(exceptions.AccessError):
+            access_locked.with_user(self.user_employee).activity_schedule(
+                'test_mail.mail_act_test_todo_generic',
+            )
+
+        self.env.invalidate_all()
+        # check read access correctly uses '_mail_get_operation_for_mail_message_operation'
+        admin_activities[0].with_user(self.user_employee).read(['summary'])
+        admin_activities[1].with_user(self.user_employee).read(['summary'])
+
+        self.env.invalidate_all()
+        # check search correctly uses '_get_mail_message_access'
+        found = self.env['mail.activity'].with_user(self.user_employee).search([('res_model', '=', 'mail.test.access.custo')])
+        self.assertEqual(found, admin_activities[:2] + emp_new_1 + emp_new_2, 'Should respect _get_mail_message_access, reading non locked records')
+
     @mute_logger('odoo.addons.mail.models.mail_mail')
     def test_activity_security_user_noaccess_automated(self):
         def _employee_crash(records, operation):
@@ -846,8 +888,15 @@ class TestActivityMixin(TestActivityCommon):
         self.assertTrue(act.exists())
         self.assertFalse(act.active)
         self.assertFalse(test_record.exists())
-        self.assertFalse(self.env['mail.activity'].with_user(self.user_admin).with_context(active_test=False).search(
-            [('active', '=', False)]))
+
+        self.env.invalidate_all()
+        self.assertEqual(
+            self.env['mail.activity'].with_user(self.user_admin).with_context(active_test=False).search(
+                [('active', '=', False)]), act,
+            'Should consider unassigned activity on removed record = access without crash'
+        )
+        self.env.invalidate_all()
+        _dummy = act.with_user(self.user_admin).read(['summary'])
 
 
 @tests.tagged("mail_activity", "post_install", "-at_install")
@@ -935,6 +984,24 @@ class TestActivitySystray(TestActivityCommon, HttpCase):
             ('res_model', '=', self.test_lead_records._name),
         ])
         self.assertEqual(len(test_with_removed), 4, 'Without ACL check, activities linked to removed records are kept')
+
+        self.env.invalidate_all()
+        test_with_removed_as_admin = self.env['mail.activity'].with_user(self.user_admin).search([
+            ('id', 'in', self.test_activities.ids),
+            ('res_model', '=', self.test_lead_records._name),
+        ])
+        self.assertEqual(len(test_with_removed_as_admin), 3, 'With ACL check, activities linked to removed records are not kept is not assigned to the user')
+
+        self.env.invalidate_all()
+        self.assertFalse(
+            self.test_activities_removed.with_user(self.user_admin).has_access('read'),
+            'No access to an activity linked to someone and whose record has been removed '
+            '(considered as no access to record); and should not crash (no MissingError)'
+        )
+        with self.assertRaises(exceptions.AccessError):  # should not raise a MissingError
+            self.test_activities_removed.with_user(self.user_admin).read(['summary'])
+
+        self.env.invalidate_all()
         test_with_removed = self.env['mail.activity'].search([
             ('id', 'in', self.test_activities.ids),
             ('res_model', '=', self.test_lead_records._name),
@@ -942,7 +1009,13 @@ class TestActivitySystray(TestActivityCommon, HttpCase):
         self.assertEqual(len(test_with_removed), 4, 'Even with ACL check, activities linked to removed records are kept if assigned to the user (see odoo/odoo#112126)')
 
         # if not assigned -> should filter out
+        self.env.invalidate_all()
         self.test_activities_removed.write({'user_id': self.user_admin.id})
+        test_with_removed = self.env['mail.activity'].search([
+            ('id', 'in', self.test_activities.ids),
+            ('res_model', '=', self.test_lead_records._name),
+        ])
+        self.assertEqual(len(test_with_removed), 3, 'With ACL check, activities linked to removed records are not kept if assigned to the another user')
         self.test_activities_removed.write({'user_id': self.user_employee.id})
 
         # be sure activities on removed records do not crash when managed, and that
